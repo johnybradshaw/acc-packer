@@ -1,0 +1,4 @@
+# Packer Variables
+variables.pkrvars.hcl
+secret.pkrvars.hcl
+.DS_Store
