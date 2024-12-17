@@ -44,8 +44,6 @@ Several security packages and utilities are installed.
 
 ### Utilities
 
-- docker
-- neofetch
 - tldr
 - htop
 - jq
@@ -55,6 +53,9 @@ Several security packages and utilities are installed.
 - apache2
 - certbot
 - linode-cli
+- kubectl
+- kubectx
+- helm
 
 ## How to use
 
@@ -78,14 +79,11 @@ ubuntu_advantage:
 
 Update the non-root user's SSH key
 
-```yaml
-users:
-  - name: acc-user  
-    groups: sudo, docker, users, admin
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
-    ssh_authorized_keys:
-      - "ssh-rsa <<PUBLIC KEY>>"
+```hcl
+  acc-user_keys       =   [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5A...",
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5A..."
+      ]
 ```
 
 Update your Puppet configuration (if used)
@@ -104,16 +102,17 @@ conf:
 
 Rename `variables.pkvars.hcl.example` to `variables.pkvars.hcl` and update as appropriate, **do not** change the `instance_type`
 
-```json
+```hcl
 linode_instance = {
     region              = "fr-par"
     instance_type       = "g6-nanode-1"
     instance_label      = "packer-ubuntu24.04"
     image               = "linode/ubuntu24.04"
-    image_label         = "ubuntu24.04-acc-packer-image"
+    image_label         = "ubuntu24.04-packer-image"
     image_description   = "ubuntu24.04 - ACC Packer Image"
     linode_tags         = ["ubuntu24.04", "packer"]
     private_ip          = false
+    firewall_id         = "123456"
 }
 ```
 
@@ -121,7 +120,7 @@ linode_instance = {
 
 Rename `secret.pkvars.hcl.example` to `secret.pkvars.hcl` and add your Linode Token, Authorised Users, and Authorised Keys as appropriate.
 
-```json
+```hcl
 # Secrets needed to run the build script
 secrets = [
     linode_token    = "<<LINODE_TOKEN>>",

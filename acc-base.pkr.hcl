@@ -1,60 +1,70 @@
-# Packer template example in HCL2 format for creating a Linode image
-/* This should be called with
+# Packer template in HCL2 format for Linode Ubuntu 24.04 image
+
+/* Call with:
 packer build \
   -var-file="secret.pkrvars.hcl" \
   -var-file="variables.pkrvars.hcl" .
 */
+
 packer {
   required_plugins {
     linode = {
-      version = ">= 1.0.1"
+      version = ">=1.5.7"
       source  = "github.com/linode/linode"
     }
   }
 }
 
-# Create a timestamp for the image name
-locals { timestamp = regex_replace(timestamp(), "[- TZ:]", "") }
+# Local parsing and formatting
+locals {
+  rendered_cloud_init = templatefile("packer_ubuntu_cloud-init.tpl", { # Render cloud-init template file
+    acc_user_keys = join("\n      - ", var.secrets.acc-user_keys) # Join keys into YAML list format
+  })
+  
+  build_time = formatdate("YYYY-MM-DD'T'hhmm", timestamp()) # Get build time
+  all_tags = concat(
+    var.linode_instance.linode_tags,  
+    ["build_date: ${local.build_time}"] # Add build time to tags
+  )
+}
 
-# This template creates a Linode image based on the latest Ubuntu 22.04 image
-
+# Define Linode image source
 source "linode" "ubuntu" {
   linode_token      = var.secrets.linode_token
   image             = var.linode_instance.image
-  image_label       = "${var.linode_instance.image_label}-${local.timestamp}"
+  image_label       = "${var.linode_instance.image_label}-${local.build_time}"
   image_description = var.linode_instance.image_description
-  instance_label    = "temporary-${var.linode_instance.image_label}-${local.timestamp}"
+  instance_label    = "temporary-${var.linode_instance.image_label}-${local.build_time}"
   region            = var.linode_instance.region
   instance_type     = var.linode_instance.instance_type
+  instance_tags     = local.all_tags
 
   ssh_username      = "root"
   private_ip        = var.linode_instance.private_ip
 
   authorized_users  = var.secrets.authorized_users
   authorized_keys   = var.secrets.authorized_keys
+  firewall_id       = var.linode_instance.firewall_id
 
+  cloud_init        = true # Ensure the image supports cloud-init
 }
 
+# Build block with provisioners
 build {
   sources = ["source.linode.ubuntu"]
 
-  # Update the image before running any provisioners
+  # Update and upgrade system
   provisioner "shell" {
-    # Set the environment variables for the shell provisioner
-    environment_vars = [
-      "DEBIAN_FRONTEND=noninteractive"
-    ]
+    environment_vars = ["DEBIAN_FRONTEND=noninteractive"]
     inline = [
       "echo 'Setting debconf to non-interactive mode...'",
-      "sudo echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections",
-      "sudo echo 'debconf debconf/priority select critical' | sudo debconf-set-selections",
-      "echo 'Updating package lists...'",
-      "sudo apt-get update",
-      "echo 'Upgrading existing packages without any prompts...'",
-      "sudo apt-get upgrade -y -o Dpkg::Options::=\"--force-confold\" -o Dpkg::Options::=\"--force-confdef\"",
+      "echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections",
+      "apt-get update",
+      "apt-get dist-upgrade -y -o Dpkg::Options::=\"--force-confold\" -o Dpkg::Options::=\"--force-confdef\""
     ]
   }
 
+  # Provision files and scripts
   # Copy scripts to the image
   provisioner "file" {
     source        = "./scripts/aliases.sh"
@@ -79,8 +89,9 @@ build {
   # Config files
   provisioner "shell" {
     inline  = [
-      # Create aide directory
-      "sudo mkdir -p /etc/aide"
+      "sudo mkdir -p /etc/aide", # Create aide directory
+      "sudo mkdir -p /etc/audit/rules.d", # Create audit directory
+      "sudo mkdir -p /etc/fail2ban" # Create fail2ban directory
     ]
   }
 
@@ -88,29 +99,56 @@ build {
     source        = "./configs/aide.conf"
     destination   = "/etc/aide/aide.conf"
   }
-  # Set permissions on files
+  provisioner "file" {
+    source        = "./configs/audit.rules"
+    destination   = "/etc/audit/rules.d/audit.rules"
+  }
+  provisioner "file" {
+    source        = "./configs/auto-upgrades.conf"
+    destination   = "/etc/apt/apt.conf.d/20auto-upgrades"
+  }
+  provisioner "file" {
+    source        = "./configs/jail.local"
+    destination   = "/etc/fail2ban/jail.local"
+  }
+  provisioner "file" {
+    source        = "./configs/ssh-hardening.conf"
+    destination   = "/etc/ssh/sshd_config.d/10-hardening.conf"
+  }
+
+  # Set permissions on provisioned files
   provisioner "shell" {
-    inline  = [
-      "sudo chmod 755 /etc/profile.d/aliases.sh",
-      "sudo chmod 755 /etc/profile.d/autologout-tty.sh",
-      "sudo chmod 700 /usr/local/bin/set-hostname.sh",
-      "sudo chmod 755 /usr/local/bin/update-rkhunter-conf.sh",
-      "sudo chmod 644 /etc/aide/aide.conf"
+    inline = [
+      "chown root:root /etc/aide/aide.conf /etc/fail2ban/jail.local",
+      "chmod 644 /etc/aide/aide.conf /etc/fail2ban/jail.local /etc/ssh/sshd_config.d/10-hardening.conf /etc/audit/rules.d/audit.rules", # World-readable, Root-only write
+      "chmod 700 /usr/local/bin/set-hostname.sh", # Root-only executable
+      "chmod 755 /usr/local/bin/update-rkhunter-conf.sh", # World-readable and executable, Root-only write
+      "chmod 755 /etc/profile.d/aliases.sh /etc/profile.d/autologout-tty.sh" # World-readable and executable, Root-only write
     ]
   }
 
-  # Copy the cloud-init file to the image
+  # Validate and deploy cloud-init template
   provisioner "file" {
-      source      = "packer_ubuntu_cloud-init.yaml" # This file is in the same directory as this template
-      destination = "/tmp/cloud-init.yml"
-    }
+    content     = local.rendered_cloud_init
+    destination = "/tmp/cloud-init.yml"
+  }
 
-  # Run cloud-init to configure the image
   provisioner "shell" {
     inline = [
-      "sudo cloud-init init --local",
-      "sudo cloud-init modules --mode=config",
-      "sudo cloud-init modules --mode=final"
+      "cloud-init schema --config-file /tmp/cloud-init.yml", # Validate syntax
+      "cloud-init init --local",
+      "cloud-init modules --mode=config",
+      "cloud-init modules --mode=final"
+    ]
+  }
+
+  # Cleanup to reduce image size
+  provisioner "shell" {
+    inline = [
+      "apt-get clean", # Remove cached packages
+      "apt autoremove -y", # Remove unused packages
+      "rm -rf /var/lib/apt/lists/*", # Remove apt cache
+      "cloud-init clean --logs" # Remove cloud-init logs
     ]
   }
 }

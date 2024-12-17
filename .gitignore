@@ -2,3 +2,7 @@
 variables.pkrvars.hcl
 secret.pkrvars.hcl
 .DS_Store
+certs
+packer_gpu.yaml
+packer_ubuntu_cloud-init copy.yaml
+.vscode/settings.json

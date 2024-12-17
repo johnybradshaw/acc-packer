@@ -8,4 +8,5 @@ linode_instance = {
     image_description   = "ubuntu24.04 - ACC Packer Image"
     linode_tags         = ["ubuntu24.04", "packer"]
     private_ip          = false
+    firewall_id         = "123456"
 }
