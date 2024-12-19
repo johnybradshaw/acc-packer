@@ -29,5 +29,4 @@ apt purge -y # Remove unused packages
 apt autoremove -y # Remove unused packages
 rm -rf /var/lib/apt/lists/* # Remove apt cache
 rm -rf /var/cache/apt/archives/* # Remove apt cache
-systemctl clean --all # Remove systemd journal
 cloud-init clean --logs # Remove cloud-init logs
