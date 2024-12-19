@@ -1,3 +1,4 @@
+# /etc/audit/rules.d/audit.rules
 # Monitor for root privilege escalation
 -a always,exit -F arch=b64 -S execve -F euid=0 -k root-activity
 -a always,exit -F arch=b32 -S execve -F euid=0 -k root-activity

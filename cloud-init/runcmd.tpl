@@ -13,36 +13,26 @@ runcmd:
   - ['systemctl', 'enable', 'unattended-upgrades']
   - ['systemctl', 'start', 'unattended-upgrades']
 
-  # Configure rkhunter
-  - ['rkhunter', '--propupd']
-  - ['rkhunter', '--update']
-
   # Configure UFW
-  - ['/bin/bash', '-c', 'ufw limit ssh']
-  - ['/bin/bash', '-c', 'ufw allow ssh']
-  - ['/bin/bash', '-c', 'ufw allow http']
-  - ['/bin/bash', '-c', 'ufw allow https']
-  - ['/bin/bash', '-c', 'ufw allow 2022/tcp']
-  - ['/bin/bash', '-c', 'ufw --force enable']
+  - ['/bin/bash', '-c', 'ufw limit ssh'] # Limit SSH
+  - ['/bin/bash', '-c', 'ufw limit 2022/tcp'] # Limit port 2022 (et)
+  - ['/bin/bash', '-c', 'ufw allow ssh'] # Allow SSH
+  - ['/bin/bash', '-c', 'ufw allow http'] # Allow HTTP
+  - ['/bin/bash', '-c', 'ufw allow https'] # Allow HTTPS
+  - ['/bin/bash', '-c', 'ufw allow 2022/tcp'] # Allow port 2022 (et)
+  - ['/bin/bash', '-c', 'ufw --force enable'] # Enable UFW
 
   # Update tl;dr
-  - ['tldr', '--update']
+  - ['su', '-', 'acc-user', '-c', 'tldr', '--update']
 
   # Install iTerm2 integration for acc-user
   - ['su', '-', 'acc-user', '-c', 'curl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash']
 
   # Update certificates
-  - ['update-ca-certificates', '--fresh']
-
-  # Start / Restart services
-  - ['systemctl', 'enable', 'auditd', '--now']
-  - ['systemctl', 'enable', 'apparmor', '--now']
-  - ['systemctl', 'restart', 'ssh']
-  - ['systemctl', 'enable', 'fail2ban', '--now']
-  - ['systemctl', 'enable', 'et', '--now']
-  - ['systemctl', 'enable', 'ufw', '--now']
-  - ['systemctl', 'enable', 'unattended-upgrades', '--now']
-  - ['systemctl', 'enable', 'apparmor', '--now']
+  - ['update-ca-certificates', '--fresh'] # Update CA certificates
 
   # Final step: redirect cloud-init logs for easy debugging
-  - ['/bin/bash', '-c', 'journalctl -u cloud-init --no-pager > /var/log/cloud-init.log']
+  - ['/bin/bash', '-c', 'journalctl -u cloud-init --no-pager > /var/log/cloud-init.log'] # Redirect cloud-init logs
+  - ['/bin/bash', '-c', 'journalctl -u cloud-config --no-pager > /var/log/cloud-config.log'] # Redirect cloud-config logs
+  - ['/bin/bash', '-c', 'journalctl -u cloud-finalize --no-pager > /var/log/cloud-finalize.log'] # Redirect cloud-finalize logs
+  - ['/bin/bash', '-c', 'journalctl -u cloud-init.service --no-pager > /var/log/cloud-init.service.log'] # Redirect cloud-init.service logs
