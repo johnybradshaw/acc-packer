@@ -1,6 +1,6 @@
 # acc-packer
 
-This repo can help prepare a base VM image (Ubuntu 24.04 LTS) on the [Akamai Connected Cloud](https://www.akamai.com/solutions/cloud-computing) (aka Linode).
+This repo can help prepare a base VM image in a composible way on the [Akamai Connected Cloud](https://www.akamai.com/solutions/cloud-computing) (aka Linode).
 
 ## What does it do?
 
@@ -40,7 +40,6 @@ Several security packages and utilities are installed.
 - aide
 - wireguard
 - livepatch
-- puppet
 
 ### Utilities
 
@@ -56,47 +55,15 @@ Several security packages and utilities are installed.
 - kubectl
 - kubectx
 - helm
+- et
 
 ## How to use
 
 Several sections need to be updated in order for the script to work correctly.
 
-### Update `packer_ubuntu_cloud-init.yaml`
+### Update `packer_ubuntu_cloud-init.tpl`
 
-Update the following with your Tailscale key
-
-```yaml
-# Start Tailscale and register this node
---authkey=tskey-xxxxxxxxxxxxxxxxxxxxxxxxxx
-```
-
-Update the following with your Ubuntu Pro key
-
-```yaml
-ubuntu_advantage:
-  token: ""
-  ```
-
-Update the non-root user's SSH key
-
-```hcl
-  acc-user_keys       =   [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5A...",
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5A..."
-      ]
-```
-
-Update your Puppet configuration (if used)
-
-```yaml
-conf:
-    agent:
-      server: puppet.server.tld
-    ca_cert: |
-      -----BEGIN PUBLIC KEY-----
-      MIICI...==
-      -----END PUBLIC KEY-----
-```
+Add or remove packages as you see fit.
 
 ### Update `variables.pkrvars.hcl`
 

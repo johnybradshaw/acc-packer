@@ -10,3 +10,22 @@ linode_instance = {
     private_ip          = false
     firewall_id         = "123456"
 }
+
+# Enable cloud-init modules
+cloud_init = {
+    apt = true
+    ca_certs = false # Not required in most cases
+    etc_hosts = true
+    final_message = true
+    groups = true
+    packages = true
+    runcmd = true
+    seed_random = true
+    set_hostname = false # Not advisable in most cases
+    snap = true
+    ssh = true
+    timezone = true
+    ubuntu_drivers = false # Not required in most cases
+    update_hostname = false # Not advisable in most cases
+    users = true
+}

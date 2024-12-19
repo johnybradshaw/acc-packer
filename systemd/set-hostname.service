@@ -1,0 +1,11 @@
+[Unit]
+Description=Set hostname from Metadata service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/set-hostname.sh
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

@@ -33,3 +33,41 @@ variable "linode_instance" {
         firewall_id         = ""
     }
 }
+
+# Cloud Init Template
+variable "cloud_init" {
+    type    = object({
+        apt = bool
+        ca_certs = bool
+        etc_hosts = bool
+        final_message = bool
+        groups = bool
+        packages = bool
+        runcmd = bool
+        seed_random = bool
+        set_hostname = bool
+        snap = bool
+        ssh = bool
+        timezone = bool
+        ubuntu_drivers = bool
+        update_hostname = bool
+        users = bool
+    })
+    default = {
+        apt = true
+        ca_certs = false # Not required in most cases
+        etc_hosts = true
+        final_message = true
+        groups = true
+        packages = true
+        runcmd = true
+        seed_random = true
+        set_hostname = false # Not advisable in most cases
+        snap = true
+        ssh = true
+        timezone = true
+        ubuntu_drivers = false # Not required in most cases
+        update_hostname = false # Not advisable in most cases
+        users = true
+    }
+}

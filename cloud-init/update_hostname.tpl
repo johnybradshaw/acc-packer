@@ -1,0 +1,6 @@
+#cloud-config
+fqdn: external.fqdn.me
+hostname: myhost
+prefer_fqdn_over_hostname: true
+create_hostname_file: true
+preserve_hostname: false
