@@ -8,17 +8,17 @@ apt:
       keyserver: hkp://keyserver.ubuntu.com:80
     # Zabbix main repository
     zabbix-main:
-      source: "deb https://repo.zabbix.com/zabbix/7.2/stable/ubuntu $(lsb_release -cs | tee) main"
+      source: "deb https://repo.zabbix.com/zabbix/7.2/stable/ubuntu $(lsb_release -cs 2>/dev/null) main"
       keyid: "D913219AB5333005"
       keyserver: hkp://keyserver.ubuntu.com:80
     # Zabbix release repository
     zabbix-release:
-      source: "deb [arch=all] https://repo.zabbix.com/zabbix/7.2/release/ubuntu $(lsb_release -cs | tee) main"
+      source: "deb [arch=all] https://repo.zabbix.com/zabbix/7.2/release/ubuntu $(lsb_release -cs 2>/dev/null) main"
       keyid: "D913219AB5333005"
       keyserver: hkp://keyserver.ubuntu.com:80
     # Zabbix tools repository
     zabbix-tools:
-      source: "deb [arch=all] https://repo.zabbix.com/zabbix-tools/debian-ubuntu $(lsb_release -cs | tee) main"
+      source: "deb [arch=all] https://repo.zabbix.com/zabbix-tools/debian-ubuntu $(lsb_release -cs 2>/dev/null) main"
       keyid: "D913219AB5333005"
       keyserver: hkp://keyserver.ubuntu.com:80
     # Helm repository
@@ -28,7 +28,7 @@ apt:
       keyserver: hkp://keyserver.ubuntu.com:80
     # Docker repository
     docker:
-      source: "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs | tee) stable"
+      source: "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs 2>/dev/null) stable"
       keyid: "8D81803C0EBFCD88"
       keyserver: hkp://keyserver.ubuntu.com:80
     # Fastfetch
